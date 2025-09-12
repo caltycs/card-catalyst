@@ -8,7 +8,7 @@ from pyspark.sql.functions import (
     trim, upper, to_timestamp, date_format
 )
 from pyspark.sql.types import DoubleType
-from src.utilities.config import Config
+from utilities.config import Config
 import logging
 
 logging.basicConfig(level=logging.INFO)

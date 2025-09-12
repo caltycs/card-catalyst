@@ -4,7 +4,7 @@ Data Reader module for reading transaction data from S3
 
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StructType, StructField, StringType, DoubleType, TimestampType
-from src.utilities.config import Config
+from utilities.config import Config
 import logging
 
 logging.basicConfig(level=logging.INFO)

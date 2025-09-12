@@ -6,15 +6,21 @@ import os
 from dotenv import load_dotenv
 from typing import Dict
 
-# Load environment variables from .env file (located in project root by default)
-load_dotenv(dotenv_path=".env")
+
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+ENV_PATH = os.path.join(BASE_DIR, ".env")
+
+# Load environment variables
+load_dotenv(dotenv_path=ENV_PATH)
 
 class Config:
     """Configuration class containing all necessary settings"""
 
     # AWS S3 Configuration
-    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', 'your_access_key')
-    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', 'your_secret_key')
+    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+    #assert AWS_ACCESS_KEY_ID is not None, "AWS_ACCESS_KEY_ID is not loaded!"
+
+    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
     AWS_REGION = os.getenv('AWS_REGION', 'us-east-1')
 
     # S3 Paths
@@ -35,7 +41,7 @@ class Config:
 
     # Spark Configuration
     SPARK_CONFIG = {
-        'app_name': 'TransactionProcessor',
+        'app_name': 'CardCatalyst',
         'master': os.getenv('SPARK_MASTER', 'local[*]'),
         'config': {
             'spark.sql.adaptive.enabled': 'true',

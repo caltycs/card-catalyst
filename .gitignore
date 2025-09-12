@@ -9,3 +9,5 @@ venv/
 # Ignore IDE files (optional)
 .idea/
 *.iml
+#Environment variables file
+.env

@@ -4,7 +4,7 @@ Data Masker module for masking sensitive fields in transaction data
 
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import col, when, length, concat, lit, substring, sha2
-from src.utilities.config import Config
+from utilities.config import Config
 import logging
 
 logging.basicConfig(level=logging.INFO)

@@ -6,6 +6,8 @@ import sys
 import argparse
 from datetime import datetime
 import logging
+import os
+from dotenv import load_dotenv
 
 # Import all modules
 from utilities.spark_session import spark_manager
@@ -224,4 +226,6 @@ def main():
             spark_manager.stop_spark_session()
 
 if __name__ == "__main__":
+
+
     main()

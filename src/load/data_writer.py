@@ -3,7 +3,7 @@ Data Writer module for storing processed data to S3 and MySQL
 """
 
 from pyspark.sql import DataFrame
-from src.utilities.config import Config, get_mysql_jdbc_url, get_mysql_properties
+from utilities.config import Config, get_mysql_jdbc_url, get_mysql_properties
 import logging
 from typing import Dict
 
