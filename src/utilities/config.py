@@ -6,9 +6,8 @@ import os
 from dotenv import load_dotenv
 from typing import Dict
 
-
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-ENV_PATH = os.path.join(BASE_DIR, ".env")
+ENV_PATH = os.path.join(BASE_DIR, "credentials.env")
 
 # Load environment variables
 load_dotenv(dotenv_path=ENV_PATH)
@@ -18,7 +17,7 @@ class Config:
 
     # AWS S3 Configuration
     AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-    #assert AWS_ACCESS_KEY_ID is not None, "AWS_ACCESS_KEY_ID is not loaded!"
+    assert AWS_ACCESS_KEY_ID is not None, "AWS_ACCESS_KEY_ID is not loaded!"
 
     AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
     AWS_REGION = os.getenv('AWS_REGION', 'us-east-1')
