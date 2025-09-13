@@ -10,4 +10,4 @@ venv/
 .idea/
 *.iml
 #Environment variables file
-.env
+credentials.env
