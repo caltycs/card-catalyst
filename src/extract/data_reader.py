@@ -29,7 +29,7 @@ class DataReader:
             StructField("currency", StringType(), False),
             StructField("location", StringType(), False)
         ])
-    
+
     def read_transactions_from_s3(self, s3_path: str = None) -> DataFrame:
         """
         Read transaction data from S3
@@ -43,27 +43,52 @@ class DataReader:
         try:
             if s3_path is None:
                 s3_path = Config.S3_RAW_PATH
-            
             logger.info(f"Reading transaction data from: {s3_path}")
-            
             # Read JSON files with the defined schema
             df = (self.spark
                   .read
                   .schema(self.schema)
                   .option("multiline", "true")
                   .option("mode", "PERMISSIVE")
+                  .option("timestampFormat", "yyyy-MM-dd'T'HH:mm:ss'Z'")
                   .json(s3_path))
-            
-            record_count = df.count()
-            logger.info(f"Successfully read {record_count} records from S3")
-            
+
+            logger.info(f"Successfully read {df.count()} records from S3")
             return df
-            
         except Exception as e:
             logger.error(f"Error reading data from S3: {str(e)}")
             raise
-    
-    def read_transactions_by_date(self, year: str, month: str, day: str) -> DataFrame:
+
+    def read_transactions_from_local(self, local_path):
+        """
+            Read transaction data from Local File System
+
+            Args:
+                local_path: Specific Local path, defaults to config path
+
+            Returns:
+                DataFrame containing transaction data
+        """
+        try:
+            if local_path is None:
+                local_path = Config.LOCAL_RAW_PATH
+            logger.info(f"Reading transaction data from: {local_path}")
+            # Read JSON files with the defined schema
+            df = (self.spark
+                  .read
+                  .schema(self.schema)
+                  .option("multiline", "true")
+                  .option("mode", "PERMISSIVE")
+                  .option("timestampFormat", "yyyy-MM-dd'T'HH:mm:ss'Z'")
+                  .json(local_path))
+
+            logger.info(f"Successfully read {df.count()} records from Local")
+            return df
+        except Exception as e:
+            logger.error(f"Error reading data from Local: {str(e)}")
+            raise
+
+    def read_transactions_by_date(self, year: str, month: str, day: str, mode:str) -> DataFrame:
         """
         Read transaction data for a specific date
         
@@ -75,8 +100,13 @@ class DataReader:
         Returns:
             DataFrame containing transaction data for the specified date
         """
-        s3_path = f"{Config.S3_RAW_PATH}year={year}/month={month}/day={day}/"
-        return self.read_transactions_from_s3(s3_path)
+        if mode == "s3":
+            data_path = f"{Config.S3_RAW_PATH}year={year}/month={month}/day={day}/"
+            return self.read_transactions_from_s3(data_path)
+        elif mode =="local":
+            data_path= f"{Config.LOCAL_RAW_PATH}/{year}_{month}_{day}.json"
+            return self.read_transactions_from_local(data_path)
+        
     
     def read_transactions_date_range(self, start_date: str, end_date: str) -> DataFrame:
         """
@@ -125,3 +155,4 @@ class DataReader:
         except Exception as e:
             logger.warning(f"Data not available at {s3_path}: {str(e)}")
             return False
+

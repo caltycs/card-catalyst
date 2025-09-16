@@ -19,6 +19,7 @@ from load.data_writer import DataWriter
 from utilities.config import Config
 
 logging.basicConfig(
+    filename="pipeline.log",
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
@@ -35,7 +36,7 @@ class TransactionProcessor:
         self.summary_calculator = SummaryCalculator()
         self.data_writer = DataWriter()
     
-    def process_transactions(self, year: str = None, month: str = None, day: str = None) -> dict:
+    def process_transactions(self, year: str , month: str , day: str , mode: str) -> dict:
         """
         Complete transaction processing pipeline
         
@@ -43,7 +44,7 @@ class TransactionProcessor:
             year: Year to process (optional)
             month: Month to process (optional)
             day: Day to process (optional)
-            
+            mode : s3 or local
         Returns:
             Dictionary with processing results
         """
@@ -51,48 +52,40 @@ class TransactionProcessor:
         
         try:
             # Step 1: Read data from S3
-            logger.info("Step 1: Reading transaction data from S3...")
-            if year and month and day:
-                raw_df = self.data_reader.read_transactions_by_date(year, month, day)
-                processing_date = f"{year}-{month}-{day}"
-            else:
-                raw_df = self.data_reader.read_transactions_from_s3()
-                processing_date = datetime.now().strftime("%Y-%m-%d")
-            
-            raw_count = raw_df.count()
-            logger.info(f"Read {raw_count} raw transactions")
+            logger.info(f"Step 1: Reading transaction data from {mode} for date {year}-{month}-{day}...")
+            processing_date = f"{year}-{month}-{day}"
+            raw_df = self.data_reader.read_transactions_by_date(year, month, day, mode)
             
             # Step 2: Clean and validate data
             logger.info("Step 2: Cleaning and validating transaction data...")
             valid_df, invalid_df = self.data_cleaner.clean_and_validate(raw_df)
-            
             valid_count = valid_df.count()
             invalid_count = invalid_df.count()
             logger.info(f"Validation results: {valid_count} valid, {invalid_count} invalid transactions")
-            
+
             # Step 3: Apply data masking
             logger.info("Step 3: Applying data masking for sensitive fields...")
             masked_df = self.data_masker.apply_all_masking(valid_df)
-            
+
             # Step 4: Calculate summaries
             logger.info("Step 4: Calculating daily merchant summaries...")
             summaries = self.summary_calculator.generate_comprehensive_summary(valid_df)
             
             # Step 5: Store results
-            logger.info("Step 5: Storing results to data lake and RDBMS...")
+            logger.info(f"Step 5: Storing results to data lake and RDBMS...")
             
             # Write processed transactions
-            self.data_writer.write_processed_transactions(masked_df, processing_date)
+            self.data_writer.write_processed_transactions(masked_df, processing_date, mode)
             
             # Write invalid transactions for audit
             if invalid_count > 0:
                 self.data_writer.write_invalid_transactions(invalid_df, processing_date)
-            
+
             # Write summaries
-            self.data_writer.write_summaries(summaries)
+            self.data_writer.write_summaries(summaries, processing_date, mode)
             
             # Write data quality report
-            self.data_writer.write_data_quality_report(valid_count, invalid_count, processing_date)
+            self.data_writer.write_data_quality_report(valid_count, invalid_count, processing_date, mode)
             
             # Unpersist cached DataFrames to free memory
             for summary_df in summaries.values():
@@ -112,54 +105,8 @@ class TransactionProcessor:
         except Exception as e:
             logger.error(f"Error in transaction processing pipeline: {str(e)}")
             raise
-    
-    def process_historical_data(self, start_date: str, end_date: str) -> dict:
-        """
-        Process historical data for a date range
-        
-        Args:
-            start_date: Start date in YYYY-MM-DD format
-            end_date: End date in YYYY-MM-DD format
-            
-        Returns:
-            Dictionary with processing results
-        """
-        logger.info(f"Processing historical data from {start_date} to {end_date}")
-        
-        # Read data for date range
-        raw_df = self.data_reader.read_transactions_date_range(start_date, end_date)
-        
-        # Process the data
-        valid_df, invalid_df = self.data_cleaner.clean_and_validate(raw_df)
-        masked_df = self.data_masker.apply_all_masking(valid_df)
-        summaries = self.summary_calculator.generate_comprehensive_summary(valid_df)
-        
-        # Store results
-        self.data_writer.write_processed_transactions(masked_df)
-        self.data_writer.write_summaries(summaries)
-        
-        return {
-            'date_range': f"{start_date} to {end_date}",
-            'raw_count': raw_df.count(),
-            'valid_count': valid_df.count(),
-            'invalid_count': invalid_df.count()
-        }
-    
-    def validate_data_availability(self, year: str, month: str, day: str) -> bool:
-        """
-        Validate if data is available for processing
-        
-        Args:
-            year: Year
-            month: Month  
-            day: Day
-            
-        Returns:
-            Boolean indicating data availability
-        """
-        s3_path = f"{Config.S3_RAW_PATH}year={year}/month={month}/day={day}/"
-        return self.data_reader.validate_data_availability(s3_path)
-    
+
+
     def generate_processing_report(self, results: dict) -> None:
         """
         Generate and log processing report
@@ -181,39 +128,23 @@ class TransactionProcessor:
 def main():
     """Main entry point"""
     parser = argparse.ArgumentParser(description='Transaction Processing Pipeline')
-    parser.add_argument('--year', type=str, help='Year to  process (YYYY)')
-    parser.add_argument('--month', type=str, help='Month to process (MM)')
-    parser.add_argument('--day', type=str, help='Day to process (DD)')
-    parser.add_argument('--start-date', type=str, help='Start date for historical processing (YYYY-MM-DD)')
-    parser.add_argument('--end-date', type=str, help='End date for historical processing (YYYY-MM-DD)')
-    parser.add_argument('--validate-only', action='store_true', help='Only validate data availability')
-    
+    parser.add_argument('--mode', required= True, type=str, help='s3 or local')
+    parser.add_argument('--year', required=True, type=str, help='Year to  process (YYYY)')
+    parser.add_argument('--month', required=True, type=str, help='Month to process (MM)')
+    parser.add_argument('--day', required=True, type=str, help='Day to process (DD)')
     args = parser.parse_args()
     
     processor = None
     try:
-        processor = TransactionProcessor()
-        
-        if args.validate_only:
-            # Validation mode
-            if args.year and args.month and args.day:
-                is_available = processor.validate_data_availability(args.year, args.month, args.day)
-                logger.info(f"Data availability for {args.year}-{args.month}-{args.day}: {is_available}")
-                sys.exit(0 if is_available else 1)
-            else:
-                logger.error("Year, month, and day are required for validation")
-                sys.exit(1)
-        
-        elif args.start_date and args.end_date:
-            # Historical processing mode
-            results = processor.process_historical_data(args.start_date, args.end_date)
+        if args.year and args.month and args.day and args.mode:
+            # Daily processing mode
+            processor = TransactionProcessor()
+            logger.info(f"Data processing for {args.mode} mode {args.year}-{args.month}-{args.day}")
+            results = processor.process_transactions(args.year, args.month, args.day, args.mode)
             processor.generate_processing_report(results)
-        
         else:
-            # Regular processing mode
-            results = processor.process_transactions(args.year, args.month, args.day)
-            processor.generate_processing_report(results)
-        
+            logger.info("All required arguments not passed")
+            sys.exit(1)
         logger.info("Pipeline execution completed successfully")
         
     except Exception as e:
@@ -226,6 +157,4 @@ def main():
             spark_manager.stop_spark_session()
 
 if __name__ == "__main__":
-
-
     main()

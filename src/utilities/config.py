@@ -28,6 +28,10 @@ class Config:
     S3_PROCESSED_PATH = f"s3a://{S3_BUCKET}/processed/"
     S3_SUMMARY_PATH = f"s3a://{S3_BUCKET}/summaries/"
 
+    LOCAL_RAW_PATH=os.path.join(BASE_DIR, "data_files/raw_files")
+    LOCAL_PROCESSED_PATH = os.path.join(BASE_DIR, "data_files/processed/")
+    LOCAL_SUMMARY_PATH = os.path.join(BASE_DIR, "data_files/summaries/")
+
     # MySQL Configuration
     MYSQL_CONFIG = {
         'host': os.getenv('MYSQL_HOST', 'localhost'),

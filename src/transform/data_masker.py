@@ -126,23 +126,21 @@ class DataMasker:
         Returns:
             DataFrame with all sensitive fields masked
         """
-        logger.info("Applying comprehensive data masking...")
+        logger.info(f"Applying comprehensive data masking...{df.head()}")
         
         # Apply all masking operations
         masked_df = df
         masked_df = self.mask_card_number(masked_df)
         masked_df = self.hash_customer_id(masked_df)
-        masked_df = self.mask_location(masked_df)
         masked_df = self.create_transaction_hash(masked_df)
         
         # Create a version suitable for analytics (with masked sensitive data)
         analytics_df = (masked_df
                        .drop('card_number', 'customer_id')  # Remove original sensitive fields
                        .withColumnRenamed('card_number_masked', 'card_number_masked')
-                       .withColumnRenamed('customer_id_hash', 'customer_id_hash')
-                       .withColumnRenamed('location_generalized', 'location'))
-        
-        logger.info("Data masking completed successfully")
+                       .withColumnRenamed('customer_id_hash', 'customer_id_hash'))
+
+        logger.info(f"Data masking completed successfully {analytics_df.head()}")
         return analytics_df
     
     def create_secure_dataset(self, df: DataFrame) -> DataFrame:
