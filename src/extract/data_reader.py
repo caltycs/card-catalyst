@@ -59,7 +59,7 @@ class DataReader:
             logger.error(f"Error reading data from S3: {str(e)}")
             raise
 
-    def read_transactions_from_local(self, local_path):
+    def read_transactions_from_local(self, local_path)-> DataFrame:
         """
             Read transaction data from Local File System
 

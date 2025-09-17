@@ -4,10 +4,8 @@ Main processing pipeline for transaction data processing
 
 import sys
 import argparse
-from datetime import datetime
 import logging
 import os
-from dotenv import load_dotenv
 
 # Import all modules
 from utilities.spark_session import spark_manager
@@ -16,7 +14,6 @@ from transform.data_cleaner import DataCleaner
 from transform.data_masker import DataMasker
 from transform.summary_calculator import SummaryCalculator
 from load.data_writer import DataWriter
-from utilities.config import Config
 
 logging.basicConfig(
     filename="pipeline.log",
@@ -51,11 +48,11 @@ class TransactionProcessor:
         logger.info("Starting transaction processing pipeline...")
         
         try:
-            # Step 1: Read data from S3
+            # Step 1: Read data from S3 or Local
             logger.info(f"Step 1: Reading transaction data from {mode} for date {year}-{month}-{day}...")
             processing_date = f"{year}-{month}-{day}"
             raw_df = self.data_reader.read_transactions_by_date(year, month, day, mode)
-            
+            raw_count = raw_df.count()
             # Step 2: Clean and validate data
             logger.info("Step 2: Cleaning and validating transaction data...")
             valid_df, invalid_df = self.data_cleaner.clean_and_validate(raw_df)
@@ -79,7 +76,7 @@ class TransactionProcessor:
             
             # Write invalid transactions for audit
             if invalid_count > 0:
-                self.data_writer.write_invalid_transactions(invalid_df, processing_date)
+                self.data_writer.write_invalid_transactions(invalid_df, processing_date, mode)
 
             # Write summaries
             self.data_writer.write_summaries(summaries, processing_date, mode)
