@@ -177,7 +177,7 @@ Error: Can't get JDBC type for array<string>
 
 #### 2. MySQL Connection Issues
 ```bash
-Error: Access denied for user 'root'@'localhost'
+Error: Access denied for user 'de-user'@'localhost'
 ```
 **Solution**:
 - Reset MySQL root password
