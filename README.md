@@ -89,7 +89,7 @@ chmod +x run_pipeline.sh
 ```
 
 
-## 🏗️ Architecture
+##  Architecture
 
 ```
 Raw Data (S3) → PySpark Processing → Clean/Masked Data → Storage (S3/Local + MySQL)
@@ -107,7 +107,7 @@ Raw Data (S3) → PySpark Processing → Clean/Masked Data → Storage (S3/Local
 
 
 
-## 💾 Data Schema
+## Data Schema
 
 ### Input Transaction Format
 ```json
@@ -136,14 +136,14 @@ s3://daily-transaction-store/
     └── currency_breakdown/
 ```
 
-## 🔒 Security Features
+## Security Features
 
 - **PCI-Compliant Data Masking**: Card numbers masked to show only last 4 digits
 - **Customer ID Hashing**: SHA-256 hashing for privacy protection
 - **Environment-Based Access Control**: Different security levels per environment
 - **Audit Trail**: Complete processing history and invalid transaction tracking
 
-## 📊 Analytics & Reporting
+## Analytics & Reporting
 
 ### Generated Summaries
 1. **Daily Merchant Summary**: Transaction counts, amounts, customer metrics
@@ -165,7 +165,7 @@ s3://daily-transaction-store/
 2. Add validation logic in `DataCleaner.validate_transaction_data()`
 3. Test with sample invalid data
 
-## 🚨 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -208,7 +208,7 @@ LOG_LEVEL=DEBUG python main.py --mode daily --year 2025 --month 06 --day 24
 python debug_schema.py
 ```
 
-## 📈 Performance Optimization
+## Performance Optimization
 
 - **Partitioning**: Data partitioned by date for optimal queries
 - **Caching**: Strategic DataFrame caching for reuse
@@ -216,7 +216,7 @@ python debug_schema.py
 - **Batch Processing**: Optimized batch sizes for MySQL writes
 - **Dynamic Resource Allocation**: Configurable Spark resources
 
-## 🔄 Production Deployment
+## Production Deployment
 
 ### Cluster Mode
 ```bash
@@ -245,12 +245,12 @@ process_transactions = BashOperator(
 )
 ```
 
-## 📜 License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 
-## 📞 Support
+## Support
 
 For issues and questions:
 - Check the troubleshooting section above
